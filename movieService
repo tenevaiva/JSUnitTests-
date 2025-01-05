@@ -1,0 +1,142 @@
+import { expect } from "chai";
+import {movieService} from "../functions/moviesService.js"
+
+describe("Movie service tests", function(){
+
+    describe("getMovies function tests", function(){
+        it("Should return all movies with status 200", function(){
+            const response = movieService.getMovies(); // взимам всички филми
+
+            expect(response.status).to.equal(200);
+            expect(response.data).to.be.an('array').that.has.lengthOf(3);
+            expect(response.data[0]).to.include.keys('id', 'name', 'genre', 'year', 'director', 'rating', 'duration', 'language', 'desc')
+            expect(response.data[1]).to.include.keys('id', 'name', 'genre', 'year', 'director', 'rating', 'duration', 'language', 'desc')
+            expect(response.data[2]).to.include.keys('id', 'name', 'genre', 'year', 'director', 'rating', 'duration', 'language', 'desc')
+        })
+    })
+
+    describe("addMovie function tests", function(){
+        it("should add new movie successfully", function(){
+            const newMovie = {
+                id: "14",
+                name: "Inception_2",
+                genre: "Sci-Fi",
+                year: 2010,
+                director: "Christopher Nolan",
+                rating: 8.8,
+                duration: 148,
+                language: "English",
+                desc: "A thief who steals corporate secrets through the use of dream-sharing technology."
+            } 
+
+            const response = movieService.addMovie(newMovie);
+
+            expect(response.status).to.equal(201);
+            expect(response.message).to.equal('Movie added successfully.');
+
+            const movies = movieService.getMovies(); //извиквам функцията getMovies
+            expect(movies.data).to.deep.include(newMovie);
+        })
+
+        it("should not add new movie when pass invalid data", function(){
+            const newMovie = {
+                id: "14",
+                name: "Inception_2",
+                genre: "Sci-Fi",
+            } 
+
+            const response = movieService.addMovie(newMovie);
+
+            expect(response.status).to.equal(400);
+            expect(response.error).to.equal('Invalid Movie Data!');
+        })
+    })
+
+    describe("deleteMovie function tests", function(){
+       it("should delete a movie by id successfully", function(){
+        const movieIdToBeDeleted = "3"; //запазвам инфото на филма, който ще изтрия, за да мога после да го използвам за съпоставка
+        const response = movieService.deleteMovie(movieIdToBeDeleted);
+
+        expect(response.status).to.equal(200);
+        expect(response.message).to.equal('Movie deleted successfully.')
+
+        const movies = movieService.getMovies().data;
+        const foundMovies = movies.filter(movies => movies.id === movieIdToBeDeleted);
+        expect(foundMovies.length).to.equal(0);
+        }) 
+
+        it("should return 404 when movie is not found", function(){
+            const response = movieService.deleteMovie("1563");
+            expect(response.status).to.equal(404);
+            expect(response.error).to.equal('Movie Not Found!')
+        })
+    })
+
+    describe("updateMovie function tests", function(){
+        it("should update existing movie", function(){
+            const updatedMovie = {
+                id: "1",
+            name: "Inception_2",
+            genre: "Sci-Fi",
+            year: 2020,
+            director: "Christopher Nolan",
+            rating: 8.8,
+            duration: 160,
+            language: "English, Bulgarian",
+            desc: "A thief who steals corporate secrets through the use of dream-sharing technology."
+            }
+
+            const response = movieService.updateMovie("Inception", updatedMovie)
+
+            expect(response.status).to.equal(200);
+            expect(response.message).to.equal("Movie updated successfully.")
+
+            const movies = movieService.getMovies().data;
+            expect(movies).to.deep.include(updatedMovie)
+        })
+
+        it("should return error if movie does not exist", function(){
+            const updatedMovie = {
+                id: "1",
+            name: "Inception_2",
+            genre: "Sci-Fi",
+            year: 2020,
+            director: "Christopher Nolan",
+            rating: 8.8,
+            duration: 160,
+            language: "English, Bulgarian",
+            desc: "A thief who steals corporate secrets through the use of dream-sharing technology."
+            }
+
+            const response = movieService.updateMovie("9999999n", updatedMovie)
+
+            expect(response.status).to.equal(404);
+            expect(response.error).to.equal("Movie Not Found!");
+        })
+
+        it("should return error if movie data is not correct", function(){
+            const updatedMovie = {
+                id: "1",
+            name: "Inception_3",
+            genre: "Sci-Fi"
+            }
+
+            const response = movieService.updateMovie("The Matrix", updatedMovie)
+
+            expect(response.status).to.equal(400);
+            expect(response.error).to.equal("Invalid Movie Data!");
+        })
+
+        it("should return error if the new movie is invalid", function(){
+            const invalidUpdatedMovie = {
+                id: "1",
+                name: "Inception",
+            };
+
+            const response = movieService.updateMovie("Inception", invalidUpdatedMovie)
+
+            expect(response.status).to.equal(400);
+            expect(response.error).to.equal("Invalid Movie Data!");
+        })
+    })
+})
