@@ -1,0 +1,120 @@
+import { expect } from "chai";
+import { gameService } from "../functions/gameServices.js";
+
+describe("gameService Tests", function () {
+  
+  describe("getGames()", function () {
+    it("Should return a successful response with a list of 3 games", function () {
+      const response = gameService.getGames();
+
+      expect(response.status).to.equal(200);
+      expect(response.data).to.be.an("array").that.has.lengthOf(3);
+      response.data.forEach((game) =>
+        expect(game).to.have.all.keys("id", "title", "genre", "year", "developer", "description")
+      );
+    });
+  });
+
+  describe("addGame()", function () {
+    it("Should add a new game successfully", function () {
+      const newGame = {
+        id: "4",
+        title: "Cyberpunk 2077",
+        genre: "RPG",
+        year: 2020,
+        developer: "CD Projekt Red",
+        description: "A sci-fi open-world RPG."
+      };
+
+      const response = gameService.addGame(newGame);
+      expect(response.status).to.equal(201);
+      expect(response.message).to.equal("Game added successfully.");
+
+      const games = gameService.getGames().data;
+      expect(games).to.deep.include(newGame);
+    });
+
+    it("Should return an error for invalid game data", function () {
+      const invalidGame = {
+        id: "5",
+        title: "Incomplete Game"
+        // Missing other required fields
+      };
+
+      const response = gameService.addGame(invalidGame);
+      expect(response.status).to.equal(400);
+      expect(response.error).to.equal("Invalid Game Data!");
+    });
+  });
+
+  describe("deleteGame()", function () {
+    it("Should delete an existing game by ID", function () {
+      const gameId = "3"; // ID of "The Witcher 3: Wild Hunt"
+
+      const response = gameService.deleteGame(gameId);
+      expect(response.status).to.equal(200);
+      expect(response.message).to.equal("Game deleted successfully.");
+
+      const games = gameService.getGames().data;
+      expect(games.find((game) => game.id === gameId)).to.be.undefined;
+    });
+
+    it("Should return an error if the game is not found", function () {
+      const invalidGameId = "999";
+
+      const response = gameService.deleteGame(invalidGameId);
+      expect(response.status).to.equal(404);
+      expect(response.error).to.equal("Game Not Found!");
+    });
+  });
+
+  describe("updateGame()", function () {
+    it("Should update an existing game with new data", function () {
+      const oldId = "2"; // ID of "God of War"
+      const updatedGame = {
+        id: "2",
+        title: "God of War: Ragnarok",
+        genre: "Action-adventure",
+        year: 2022,
+        developer: "Santa Monica Studio",
+        description: "The sequel to the original God of War game."
+      };
+
+      const response = gameService.updateGame(oldId, updatedGame);
+      expect(response.status).to.equal(200);
+      expect(response.message).to.equal("Game updated successfully.");
+
+      const games = gameService.getGames().data;
+      expect(games).to.deep.include(updatedGame);
+    });
+
+    it("Should return an error if the game to update is not found", function () {
+      const invalidId = "999";
+      const newGame = {
+        id: "999",
+        title: "Non-existent Game",
+        genre: "Action",
+        year: 2023,
+        developer: "Unknown",
+        description: "This game does not exist."
+      };
+
+      const response = gameService.updateGame(invalidId, newGame);
+      expect(response.status).to.equal(404);
+      expect(response.error).to.equal("Game Not Found!");
+    });
+
+    it("Should return an error if the new game data is invalid", function () {
+      const oldId = "1"; // ID of "The Legend of Zelda: Breath of the Wild"
+      const invalidGame = {
+        id: "1",
+        title: "Invalid Game"
+        // Missing other required fields
+      };
+
+      const response = gameService.updateGame(oldId, invalidGame);
+      expect(response.status).to.equal(400);
+      expect(response.error).to.equal("Invalid Game Data!");
+    });
+  });
+});
